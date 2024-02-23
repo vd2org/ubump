@@ -324,7 +324,7 @@ class Actions:
             return
 
         if not version:
-            logger.info(f"The new version is {config.version.to_str()}...")
+            logger.info(f"The new version is {config.str_version}...")
 
         logger.info(f"Updating files...")
 
