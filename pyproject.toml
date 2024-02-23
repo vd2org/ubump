@@ -1,0 +1,27 @@
+[project]
+name = "ubump"
+version = "0.1.0"
+description = "Yet another bump tool"
+authors = [
+    {name = "vd", email = "ubump@vd2.org"},
+]
+dependencies = [
+    "packaging~=23.2",
+    "tomlkit>=0.12.3",
+]
+requires-python = ">=3.11,<3.13"
+readme = "README.md"
+license = {text = "MIT"}
+
+[build-system]
+requires = ["pdm-backend"]
+build-backend = "pdm.backend"
+
+
+[tool.pdm]
+distribution = true
+
+[tool.pdm.dev-dependencies]
+dev = [
+    "pytest>=8.0.1",
+]
