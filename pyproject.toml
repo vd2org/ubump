@@ -1,6 +1,6 @@
 [project]
 name = "ubump"
-version = "0.1.4"
+version = "0.1.5"
 description = "Yet another bump tool"
 classifiers = [
     "Development Status :: 4 - Beta",
