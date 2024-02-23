@@ -9,7 +9,7 @@ import subprocess
 import sys
 from argparse import ArgumentParser
 from contextlib import suppress
-from enum import StrEnum
+from enum import StrEnum, auto
 from string import Template
 from typing import Optional, NamedTuple, Self
 
@@ -43,11 +43,11 @@ class ConfigMode(StrEnum):
 
 
 class Action(StrEnum):
-    init = "init"
-    major = "major"
-    minor = "minor"
-    patch = "patch"
-    set = "set"
+    init = auto()
+    major = auto()
+    minor = auto()
+    patch = auto()
+    set = auto()
 
 
 class Version(NamedTuple):
@@ -363,7 +363,7 @@ def main():
 
     init = subs.add_parser(Action.init, help="Initialize ubump config.")
     init.add_argument("--no-pyproject", default=False, action="store_true",
-                      help="Don't use pyproject.toml, use .ubump.toml instead.")
+                      help=f"Don't use {ConfigMode.pyproject}, use {ConfigMode.ubump} instead.")
     init.add_argument("version", help="Current version.")
     init.add_argument("-t", "--template", default="v${major}.${minor}.${patch}",
                       help="The version template.")
@@ -377,7 +377,7 @@ def main():
     set_version = subs.add_parser(Action.set, help="Set version.")
     set_version.add_argument("version", help="The new version to set.")
 
-    for sub in [init, major, minor, patch, set_version]:
+    for sub in (init, major, minor, patch, set_version):
         sub.add_argument("--dry", default=False, action="store_true",
                          help="Dry run, don't change anything.")
 
