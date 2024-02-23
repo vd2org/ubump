@@ -18,7 +18,7 @@ from packaging.version import parse
 from tomlkit.exceptions import TOMLKitError
 
 NAME = "ubump"
-VERSION = "v0.1.0"
+VERSION = "v0.1.1"
 
 logging.basicConfig(level=logging.INFO, format="%(levelname)s - %(message)s")
 logger = logging.getLogger(NAME)
