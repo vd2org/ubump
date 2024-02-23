@@ -335,6 +335,11 @@ class Actions:
 
         if not dry:
             Tools.update_files(config, old_str_version)
+
+            message = Template(config.message).substitute(version=config.str_version)
+            Git.git_commit(message)
+            Git.git_tag(config.str_version, message)
+
             config.save(mode)
 
         logger.info("Done.")
