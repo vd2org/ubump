@@ -42,6 +42,14 @@ class ConfigMode(StrEnum):
     ubump = ".ubump.toml"
 
 
+class Action(StrEnum):
+    init = "init"
+    major = "major"
+    minor = "minor"
+    patch = "patch"
+    set = "set"
+
+
 class Version(NamedTuple):
     major: int
     minor: int
@@ -295,7 +303,7 @@ class Actions:
         logger.info("Done.")
 
     @staticmethod
-    def bump(action: str, version: Optional[str] = None, dry: bool = False):
+    def bump(action: Action, version: Optional[str] = None, dry: bool = False):
         mode, config = Config.try_load()
 
         if not Git.is_repo_clean() and not dry:
@@ -309,15 +317,16 @@ class Actions:
         if not version:
             logger.info(f"Bumping version {action} from {old_str_version}...")
 
-        if action == "set":
-            logger.info(f"Setting version to {version} from {old_str_version}...")
-            config.version = Version.from_str(version)
-        elif action == "major":
-            config.version = config.version._replace(major=config.version.major + 1, minor=0, patch=0)
-        elif action == "minor":
-            config.version = config.version._replace(minor=config.version.minor + 1, patch=0)
-        elif action == "patch":
-            config.version = config.version._replace(patch=config.version.patch + 1)
+        match action:
+            case Action.set:
+                logger.info(f"Setting version to {version} from {old_str_version}...")
+                config.version = Version.from_str(version)
+            case Action.major:
+                config.version = config.version._replace(major=config.version.major + 1, minor=0, patch=0)
+            case Action.minor:
+                config.version = config.version._replace(minor=config.version.minor + 1, patch=0)
+            case Action.patch:
+                config.version = config.version._replace(patch=config.version.patch + 1)
 
         if old_str_version == config.str_version:
             logger.error(f"The version is already {config.str_version}, nothing to do.")
@@ -352,23 +361,25 @@ def main():
 
     subs = parser.add_subparsers(title="Action", metavar="action", dest="action")
 
-    init_ubump = subs.add_parser("init", help="Initialize ubump config.")
-    init_ubump.add_argument("--no-pyproject", default=False, action="store_true",
-                            help="Don't use pyproject.toml, use .ubump.toml instead.")
-    init_ubump.add_argument("version", help="Current version.")
-    init_ubump.add_argument("-t", "--template", default="v${major}.${minor}.${patch}", help="The version template.")
+    init = subs.add_parser(Action.init, help="Initialize ubump config.")
+    init.add_argument("--no-pyproject", default=False, action="store_true",
+                      help="Don't use pyproject.toml, use .ubump.toml instead.")
+    init.add_argument("version", help="Current version.")
+    init.add_argument("-t", "--template", default="v${major}.${minor}.${patch}",
+                      help="The version template.")
 
-    major = subs.add_parser("major", help="Bump major version.")
+    major = subs.add_parser(Action.major, help="Bump major version.")
 
-    minor = subs.add_parser("minor", help="Bump minor version.")
+    minor = subs.add_parser(Action.minor, help="Bump minor version.")
 
-    patch = subs.add_parser("patch", help="Bump patch version.")
+    patch = subs.add_parser(Action.patch, help="Bump patch version.")
 
-    set_version = subs.add_parser("set", help="Set version.")
+    set_version = subs.add_parser(Action.set, help="Set version.")
     set_version.add_argument("version", help="The new version to set.")
 
-    for sub in [init_ubump, major, minor, patch, set_version]:
-        sub.add_argument("--dry", default=False, action="store_true", help="Dry run, don't change anything.")
+    for sub in [init, major, minor, patch, set_version]:
+        sub.add_argument("--dry", default=False, action="store_true",
+                         help="Dry run, don't change anything.")
 
     args = vars(parser.parse_args())
 
@@ -376,12 +387,12 @@ def main():
         if args.get("dry"):
             logger.warning("Dry run, nothing will be changed!")
 
-        if args.get("action") == "init":
+        if args.get("action") == Action.init:
             args.pop("action")
             Actions.init(**args)
         else:
             if not args.get("action"):
-                args["action"] = "patch"
+                args["action"] = Action.patch
             Actions.bump(**args)
     except ConfigError as e:
         logger.error(e)
