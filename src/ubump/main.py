@@ -249,7 +249,7 @@ class Git:
 
     @classmethod
     def is_repo_clean(cls) -> bool:
-        return cls._call('diff-index', '--quiet', 'HEAD', '--', log_error=False)
+        return cls._call('diff', '--exit-code', '--quiet', log_error=False)
 
     @classmethod
     def git_commit(cls, message: str) -> bool:
