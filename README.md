@@ -7,7 +7,7 @@ Yet another version bumper for your project.
 I wanted to have a simple version bumper that I could use in my CI/CD pipeline.
 I didn't want to have to install a bunch of dependencies or have to write a bunch of configs to just change the version number.
 
-This tool having less than 400 lines of code and just one dependency (`tomlkit`) is the result of that.
+This tool having less than 500 lines of code and just one dependency (`tomlkit`) is the result of that.
 
 ## What does it do?
 

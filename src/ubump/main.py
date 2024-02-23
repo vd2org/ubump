@@ -179,7 +179,7 @@ class Config:
             raise BothConfigFoundError(f"Version config found in both files: {mode.pyproject} and {mode.ubump}!")
 
         if not config and not pyproject:
-            raise ConfigNotFoundError(f"No version config found, use 'init' command to create one.")
+            raise ConfigNotFoundError(f"No version config found, use '{Action.init}' command to create one.")
 
         return mode, config or pyproject
 
@@ -307,8 +307,7 @@ class Actions:
         mode, config = Config.try_load()
 
         if not Git.is_repo_clean() and not dry:
-            logger.error(f"Git repo is not clean, aborting...")
-            return
+            raise ConfigError(f"Git repo is not clean, aborting...")
 
         logger.info(f"Using version config from {mode}...")
 
@@ -327,10 +326,11 @@ class Actions:
                 config.version = config.version._replace(minor=config.version.minor + 1, patch=0)
             case Action.patch:
                 config.version = config.version._replace(patch=config.version.patch + 1)
+            case _:
+                raise RuntimeError(f"Unknown action: {action}")
 
         if old_str_version == config.str_version:
-            logger.error(f"The version is already {config.str_version}, nothing to do.")
-            return
+            raise ConfigError(f"The version is already {config.str_version}, nothing to do.")
 
         if not version:
             logger.info(f"The new version is {config.str_version}...")
@@ -340,8 +340,7 @@ class Actions:
         nok = Tools.update_files(config, old_str_version, dry=True)
 
         if nok:
-            logger.error(f"The current version is not found in some files, aborting...")
-            return
+            raise ConfigError(f"The current version is not found in some files, aborting...")
 
         if not dry:
             Tools.update_files(config, old_str_version)
@@ -356,7 +355,6 @@ class Actions:
 
 def main():
     parser = ArgumentParser(prog=NAME, description="Minimalistic version bumper.")
-
     parser.add_argument("--version", action="version", version=f"%(prog)s {VERSION}")
 
     subs = parser.add_subparsers(title="Action", metavar="action", dest="action")
