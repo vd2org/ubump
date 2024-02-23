@@ -236,6 +236,7 @@ class Tools:
 class Git:
     @staticmethod
     def _call(*args, log_error: bool = True):
+        logger.debug(f"Calling git with {args}...")
         try:
             subprocess.check_output(('git', *args))
             return True
@@ -243,7 +244,7 @@ class Git:
             logger.warning("Git is not found, can't commit.")
             return False
         except subprocess.CalledProcessError:
-            if log_error:
+            if log_error or sys.flags.debug:
                 logger.error("Call to git failed.")
             return False
 
