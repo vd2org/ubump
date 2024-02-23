@@ -71,7 +71,7 @@ class Config:
         self._template = template
         self._files = files or []
         self._tag = tag or True
-        self._message = message or "Bump version to v{version}"
+        self._message = message or "Bump to v{version}"
 
     @property
     def version(self) -> Version:
@@ -252,11 +252,11 @@ class Git:
         return cls._call('diff', '--exit-code', '--quiet', log_error=False)
 
     @classmethod
-    def git_commit(cls, message: str) -> bool:
+    def commit(cls, message: str) -> bool:
         return cls._call('commit', '-am', message)
 
     @classmethod
-    def git_tag(cls, tag: str, message: str) -> bool:
+    def tag(cls, tag: str, message: str) -> bool:
         return cls._call('tag', '-a', tag, '-m', message)
 
 
@@ -337,8 +337,8 @@ class Actions:
             Tools.update_files(config, old_str_version)
 
             message = Template(config.message).substitute(version=config.str_version)
-            Git.git_commit(message)
-            Git.git_tag(config.str_version, message)
+            Git.commit(message)
+            Git.tag(config.str_version, message)
 
             config.save(mode)
 
