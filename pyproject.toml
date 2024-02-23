@@ -48,6 +48,6 @@ ubump = "ubump.main:main"
 
 [tool.ubump]
 template = "v${major}.${minor}.${patch}"
-message = "Bump to v{version}"
+message = "Bump to v${version}"
 tag = true
 files = ['src/ubump/main.py']
