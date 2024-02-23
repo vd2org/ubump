@@ -380,6 +380,8 @@ def main():
             args.pop("action")
             Actions.init(**args)
         else:
+            if not args.get("action"):
+                args["action"] = "patch"
             Actions.bump(**args)
     except ConfigError as e:
         logger.error(e)
