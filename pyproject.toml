@@ -1,6 +1,6 @@
 [project]
 name = "ubump"
-version = "0.1.7"
+version = "0.1.8"
 description = "Yet another bump tool"
 keywords = ["bump", "bumpversion", "bump2version", "bump-version", "bumper", "bumping", "version", "versioning"]
 classifiers = [
