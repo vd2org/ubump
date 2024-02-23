@@ -71,7 +71,7 @@ class Config:
         self._template = template
         self._files = files or []
         self._tag = tag or True
-        self._message = message or "Bump to v{version}"
+        self._message = message or "Bump to {version}"
 
     @property
     def version(self) -> Version:
@@ -337,10 +337,9 @@ class Actions:
             Tools.update_files(config, old_str_version)
 
             message = Template(config.message).substitute(version=config.str_version)
+            config.save(mode)
             Git.commit(message)
             Git.tag(config.str_version, message)
-
-            config.save(mode)
 
         logger.info("Done.")
 
