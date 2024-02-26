@@ -79,7 +79,7 @@ class Config:
         self._template = template
         self._files = files or []
         self._tag = tag or True
-        self._message = message or "Bump to {version}"
+        self._message = message or "Bump to ${version}"
 
     @property
     def version(self) -> Version:
