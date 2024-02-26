@@ -280,11 +280,13 @@ class Actions:
 
         logger.info(f"Initializing ubump config using version {version} and template {template}...")
 
+        mode = None
         if not no_pyproject:
             with suppress(FileNotFoundError):
                 with open(ConfigMode.pyproject, "rb"):
                     mode = ConfigMode.pyproject
-        else:
+
+        if not mode:
             mode = ConfigMode.ubump
 
         config = Config(
