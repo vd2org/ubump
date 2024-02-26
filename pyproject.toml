@@ -41,6 +41,7 @@ distribution = true
 [tool.pdm.dev-dependencies]
 dev = [
     "pytest~=8.0.1",
+    "requests>=2.31.0",
 ]
 
 [project.scripts]
