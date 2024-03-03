@@ -369,7 +369,7 @@ class Actions:
             logger.info(f"The new version is {config.str_version}...")
 
         logger.info(f"Updating files...")
-        Tools.update_files(config, old_str_version, dry=True, silent=dry)
+        Tools.update_files(config, old_str_version, dry=True, silent=not dry)
 
         if not dry:
             Tools.update_files(config, old_str_version)
