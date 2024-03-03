@@ -247,26 +247,24 @@ class Tools:
         return files
 
     @staticmethod
-    def update_files(config: Config, old_str_version: str, *, dry: bool = False):
+    def update_files(config: Config, old_str_version: str, *, dry: bool = False, silent: bool = False):
         cwd = os.getcwd()
-        nok = False
-        for file_name in config.files:
-            with open(os.path.join(cwd, file_name), "r+") as file:
-                content = file.read()
-                new_content = content.replace(old_str_version, config.str_version)
-                if new_content == content:
-                    logger.error(f"Version not found in {file}...")
-                    nok = True
+        try:
+            for file_name in config.files:
+                with open(os.path.join(cwd, file_name), "r+") as file:
+                    content = file.read()
+                    new_content = content.replace(old_str_version, config.str_version)
+                    if new_content == content:
+                        raise ConfigError(f"Version not found in {file}")
 
-                if dry:
-                    continue
-
-                file.truncate(0)
-                file.seek(0)
-                file.write(new_content)
-            logger.info(f"Updated {file_name}.")
-
-        return nok
+                    if not dry:
+                        file.truncate(0)
+                        file.seek(0)
+                        file.write(new_content)
+                if not silent:
+                    logger.info(f"Updated {file_name}")
+        except OSError as e:
+            raise ConfigError(f"Can't open file: {e}")
 
 
 class Git:
@@ -371,9 +369,7 @@ class Actions:
             logger.info(f"The new version is {config.str_version}...")
 
         logger.info(f"Updating files...")
-        nok = Tools.update_files(config, old_str_version, dry=True)
-        if nok:
-            raise ConfigError(f"The current version is not found in some files, aborting...")
+        Tools.update_files(config, old_str_version, dry=True, silent=dry)
 
         if not dry:
             Tools.update_files(config, old_str_version)
