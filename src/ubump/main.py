@@ -56,8 +56,8 @@ class Action(StrEnum):
 @dataclass(frozen=True)
 class Version:
     major: int
-    minor: int
-    patch: int
+    minor: Optional[int] = None
+    patch: Optional[int] = None
 
     @classmethod
     def from_str(cls, version: str):
