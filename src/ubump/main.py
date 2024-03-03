@@ -19,7 +19,7 @@ from packaging.version import parse
 from tomlkit.exceptions import TOMLKitError
 
 NAME = "ubump"
-VERSION = "v0.1.12"
+VERSION = "v0.1.13"
 
 DEFAULT_TEMPLATE = "${major}.${minor}.${patch}"
 
