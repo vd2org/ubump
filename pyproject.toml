@@ -1,5 +1,52 @@
 [project]
+name = "ubump"
 version = "0.1.12"
+description = "Yet another bump tool"
+keywords = ["bump", "bumpversion", "bump2version", "bump-version", "bumper", "bumping", "version", "versioning"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Information Technology",
+    "Intended Audience :: System Administrators",
+    "Topic :: Software Development",
+    "Topic :: Software Development :: Version Control",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+]
+authors = [
+    { name = "vd", email = "ubump@vd2.org" },
+]
+dependencies = [
+    "packaging~=23.2",
+    "tomlkit~=0.12.3",
+]
+requires-python = ">=3.11,<3.13"
+readme = "README.md"
+license = { file = "LICENSE" }
+
+[project.urls]
+homepage = "https://github.com/vd2org/ubump"
+repository = "https://github.com/vd2org/ubump.git"
+issues = "https://github.com/vd2org/ubump/issues"
+
+[build-system]
+requires = ["pdm-backend"]
+build-backend = "pdm.backend"
+
+
+[tool.pdm]
+distribution = true
+
+[tool.pdm.dev-dependencies]
+dev = [
+    "pytest~=8.0.1",
+    "requests>=2.31.0",
+]
+
+[project.scripts]
+ubump = "ubump.main:main"
+
 
 [tool.ubump]
 template = "v${major}.${minor}.${patch}"
