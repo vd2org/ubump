@@ -9,9 +9,10 @@ import subprocess
 import sys
 from argparse import ArgumentParser
 from contextlib import suppress
+from dataclasses import dataclass, asdict, replace
 from enum import StrEnum, auto
 from string import Template
-from typing import Optional, NamedTuple, Self
+from typing import Optional, Self
 
 import tomlkit
 from packaging.version import parse
@@ -19,6 +20,8 @@ from tomlkit.exceptions import TOMLKitError
 
 NAME = "ubump"
 VERSION = "v0.1.10"
+
+DEFAULT_TEMPLATE = "${major}.${minor}.${patch}"
 
 logging.basicConfig(level=logging.INFO, format="%(levelname)s - %(message)s")
 logger = logging.getLogger(NAME)
@@ -50,7 +53,8 @@ class Action(StrEnum):
     set = auto()
 
 
-class Version(NamedTuple):
+@dataclass(frozen=True)
+class Version:
     major: int
     minor: int
     patch: int
@@ -58,19 +62,32 @@ class Version(NamedTuple):
     @classmethod
     def from_str(cls, version: str):
         v = cls(*parse(version).release)
-        if v.to_str() != version:
-            raise ValueError(f"Invalid version: {version}")
+        if v.to_raw_str() != version:
+            raise ConfigError(f"Invalid version: {version} != {v.to_raw_str()}!")
         return v
 
-    def to_str(self, template: str = "${major}.${minor}.${patch}"):
-        return Template(template).substitute(self._asdict())
+    def to_str(self, template: str = DEFAULT_TEMPLATE):
+        return Template(template).substitute(asdict(self))
+
+    def to_raw_str(self):
+        match (self.major, self.minor, self.patch):
+            case (major, None, None):
+                template = f"{major}"
+            case (major, minor, None):
+                template = f"{major}.{minor}"
+            case (major, minor, patch):
+                template = f"{major}.{minor}.{patch}"
+            case _:
+                raise RuntimeError(f"Unknown version configuration: {self}")
+
+        return Template(template).substitute(asdict(self))
 
 
 class Config:
     def __init__(
             self,
             version: Version,
-            template: Optional[str],
+            template: str,
             message: Optional[str] = None,
             tag: Optional[bool] = None,
             files: Optional[list[str]] = None
@@ -80,6 +97,14 @@ class Config:
         self._files = files or []
         self._tag = tag or True
         self._message = message or "Bump to ${version}"
+        self._validate()
+
+    def _validate(self, new_version: Optional[Version] = None):
+        version = new_version or self.version
+        template_ids = set(Template(self.template).get_identifiers())
+        version_keys = set(k for k, v in asdict(version).items() if v is not None)
+        if template_ids != version_keys:
+            raise ConfigError(f"Version {version.to_raw_str()} isn't suitable for template {self.template}!")
 
     @property
     def version(self) -> Version:
@@ -91,6 +116,7 @@ class Config:
 
     @version.setter
     def version(self, value: Version):
+        self._validate(value)
         self._version = value
 
     @property
@@ -121,16 +147,16 @@ class Config:
             "files": self.files
         }
 
-        with open(mode, "r+") as file:
+        with open(mode, "a+") as file:
             content = tomlkit.load(file)
 
             if mode is ConfigMode.ubump:
-                ubump["version"] = self.version.to_str()
+                ubump["version"] = self.version.to_raw_str()
                 content["ubump"] = ubump
             else:
                 if "project" not in content:
                     content["project"] = {}
-                content["project"]["version"] = self.version.to_str()
+                content["project"]["version"] = self.version.to_raw_str()
                 if "tool" not in content:
                     content["tool"] = {}
                 content["tool"]["ubump"] = ubump
@@ -271,7 +297,7 @@ class Git:
 
 class Actions:
     @staticmethod
-    def init(version: str, template: Optional[str], no_pyproject: bool = False, dry: bool = False):
+    def init(version: str, template: str, no_pyproject: bool = False, dry: bool = False):
         logger.info(f"Initializing ubump config...")
 
         with suppress(ConfigNotFoundError):
@@ -289,12 +315,9 @@ class Actions:
         if not mode:
             mode = ConfigMode.ubump
 
-        config = Config(
-            version=Version.from_str(version),
-            template=template or "v${major}.${minor}.${patch}"
-        )
-
         logger.info(f"Using {mode} as config file...")
+
+        config = Config(version=Version.from_str(version), template=template)
 
         logger.info(f"Searching for files contains current version {config.str_version}...")
         config.files = Tools.walk(config)
@@ -320,14 +343,22 @@ class Actions:
 
         match action:
             case Action.set:
-                logger.info(f"Setting version to {version} from {old_str_version}...")
+                ver = Version.from_str(version)
+                logger.info(f"Setting version to {ver.to_str(config.template)} from {old_str_version}...")
                 config.version = Version.from_str(version)
             case Action.major:
-                config.version = config.version._replace(major=config.version.major + 1, minor=0, patch=0)
+                config.version = replace(config.version, major=config.version.major + 1,
+                                         minor=0 if config.version.minor is not None else None,
+                                         patch=0 if config.version.patch is not None else None)
             case Action.minor:
-                config.version = config.version._replace(minor=config.version.minor + 1, patch=0)
+                if config.version.minor is None:
+                    raise ConfigError(f"Can't bump minor version for {config.version.to_raw_str()}!")
+                config.version = replace(config.version, minor=config.version.minor + 1,
+                                         patch=0 if config.version.patch is not None else None)
             case Action.patch:
-                config.version = config.version._replace(patch=config.version.patch + 1)
+                if config.version.patch is None:
+                    raise ConfigError(f"Can't bump patch version for {config.version.to_raw_str()}!")
+                config.version = replace(config.version, patch=config.version.patch + 1)
             case _:
                 raise RuntimeError(f"Unknown action: {action}")
 
@@ -365,7 +396,7 @@ def main():
     init.add_argument("--no-pyproject", default=False, action="store_true",
                       help=f"Don't use {ConfigMode.pyproject}, use {ConfigMode.ubump} instead.")
     init.add_argument("version", help="Current version.")
-    init.add_argument("-t", "--template", default="v${major}.${minor}.${patch}",
+    init.add_argument("-t", "--template", default=f"v{DEFAULT_TEMPLATE}",
                       help="The version template.")
 
     major = subs.add_parser(Action.major, help="Bump major version.")
