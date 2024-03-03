@@ -264,6 +264,7 @@ class Tools:
                 file.truncate(0)
                 file.seek(0)
                 file.write(new_content)
+            logger.info(f"Updated {file_name}.")
 
         return nok
 
@@ -370,9 +371,7 @@ class Actions:
             logger.info(f"The new version is {config.str_version}...")
 
         logger.info(f"Updating files...")
-
         nok = Tools.update_files(config, old_str_version, dry=True)
-
         if nok:
             raise ConfigError(f"The current version is not found in some files, aborting...")
 
