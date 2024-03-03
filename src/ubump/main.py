@@ -148,6 +148,7 @@ class Config:
         }
 
         with open(mode, "a+") as file:
+            file.seek(0)
             content = tomlkit.load(file)
 
             if mode is ConfigMode.ubump:
