@@ -377,7 +377,8 @@ class Actions:
             message = Template(config.message).substitute(version=config.str_version)
             config.save(mode)
             Git.commit(message)
-            Git.tag(config.str_version, message)
+            if config.tag:
+                Git.tag(config.str_version, message)
 
         logger.info("Done.")
 
